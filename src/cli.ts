@@ -5,7 +5,7 @@ import fsPromises from 'fs/promises';
 
 const usage = `
     Usage
-      $ markdown-translate [options] [<file> ...]
+      $ paginal-translator [options] [<file> ...]
  
     Options
       --deepl-auth-key <key>  deepl api auth key
