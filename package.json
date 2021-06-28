@@ -1,5 +1,5 @@
 {
-  "name": "markdown-translate",
+  "name": "paginal-translator",
   "version": "1.0.0",
   "description": "",
   "main": "lib/index.js",
@@ -26,6 +26,10 @@
   ],
   "author": "Naoto Kato <naotokato@plaid.co.jp>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/otolab/paginal-translator.git"
+  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "prettier --write"
