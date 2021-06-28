@@ -1,1 +1,8 @@
-# markdown-translate
+markdown-translate
+====================
+
+github形式のMarkdownを自動分解して、原語と翻訳文を並べた対訳状態のMarkdownを生成する。
+
+`---` を使った手動分割の他、見出しや文字数を使った自動分割もサポートする。
+
+
