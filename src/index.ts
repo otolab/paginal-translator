@@ -13,23 +13,34 @@ function joinMds(mds: Result[]): string {
     .join('\n\n--\n\n');
 }
 
+export interface ProcessOptions {
+  fromHtml: boolean;
+}
+
 export interface Result {
   source: string;
   dist: string;
 }
 
 export async function translate(
-  md: string,
-  options: TranslateOptionsForDeepl,
-  chunkingOptions: ChunkingOptions = {}
+  src: string,
+  options: {
+    processOptions: ProcessOptions;
+    translateOptions: TranslateOptionsForDeepl;
+    chunkingOptions: ChunkingOptions;
+  }
 ): Promise<string> {
-  const { targetLang, authKey, useFreeApi } = options;
+  const { targetLang, authKey, useFreeApi } = options.translateOptions;
 
-  const srcHtml = convertMdToHtml(md);
+  if (options.processOptions.fromHtml) {
+    src = convertHtmlToMd(src);
+  }
+
+  const srcHtml = convertMdToHtml(src);
 
   const srcDom = await createDomTree(srcHtml);
 
-  const domChunks = chunking(srcDom, chunkingOptions);
+  const domChunks = chunking(srcDom, options.chunkingOptions);
 
   const promises = domChunks.map(
     async (chunk): Promise<Result> => {

@@ -9,6 +9,7 @@ const usage = `
  
     Options
       --deepl-auth-key <key>  deepl api auth key
+      --from-html             html source mode (default: false; md source mode)
       --help                  help
 
     Environments
@@ -23,6 +24,10 @@ export const cli = meow(usage, {
     deeplAuthKey: {
       type: 'string',
       default: '',
+    },
+    fromHtml: {
+      type: 'boolean',
+      default: false,
     },
   },
   autoHelp: true,
@@ -45,11 +50,17 @@ export const run = async (
     content = await getStdin();
   }
 
-  const result = await translate(
-    content,
-    { targetLang: 'ja', authKey: flags.deeplAuthKey || process.env.DEEPL_AUTH_KEY || '', useFreeApi: false },
-    { tooLongThreshold: 500 }
-  );
+  const result = await translate(content, {
+    processOptions: {
+      fromHtml: flags.fromHtml,
+    },
+    translateOptions: {
+      targetLang: 'ja',
+      authKey: flags.deeplAuthKey || process.env.DEEPL_AUTH_KEY || '',
+      useFreeApi: false,
+    },
+    chunkingOptions: { tooLongThreshold: 500 },
+  });
 
   // output
   console.log(result);
