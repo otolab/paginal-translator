@@ -10,7 +10,7 @@ function joinMds(mds: Result[]): string {
       const { source, dist } = pair;
       return [source, dist].join('\n\n');
     })
-    .join('\n\n--\n\n');
+    .join('\n\n----\n\n');
 }
 
 export interface ProcessOptions {
