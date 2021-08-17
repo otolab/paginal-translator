@@ -17,17 +17,33 @@ function mergeHeadersResult(pair: Result): string {
   return code;
 }
 
-function joinMds(mds: Result[]): string {
+function mergeDefaultResult(pair: Result): string {
+  const { source, dist } = pair;
+
+  // TODO: use template
+  return [
+    dist,
+    '\n',
+    '> _原文:_',
+    source
+      .split('\n')
+      .map((line) => `> ${line}`)
+      .join('\n'),
+    '\n',
+    '----',
+  ].join('\n');
+}
+
+function joinMds(mds: Result[], options: { mergeTranslatedHeader: boolean }): string {
   return mds
     .map((pair: Result): string => {
-      const { source, dist } = pair;
       const { mode } = pair;
       if (options.mergeTranslatedHeader && mode === 'headers') {
         return mergeHeadersResult(pair);
       }
-      return [source, dist].join('\n\n');
+      return mergeDefaultResult(pair);
     })
-    .join('\n\n----\n\n');
+    .join('\n\n');
 }
 
 export interface ProcessOptions {
