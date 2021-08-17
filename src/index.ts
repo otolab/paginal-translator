@@ -4,10 +4,27 @@ import { convertMdToHtml, convertHtmlToMd, convertDomToHtml } from './converters
 
 import { createDomTree, chunking, ChunkingOptions } from './chunking';
 
+function mergeHeadersResult(pair: Result): string {
+  const { source, dist } = pair;
+  const sourceHeaders = source.split('\n').filter((v) => v);
+  const distHeaders = dist.split('\n').filter((v) => v);
+
+  let code = '';
+  while (sourceHeaders.length > 0 && distHeaders.length > 0) {
+    let srcHeader = sourceHeaders.shift()?.replace(/^#+\s*/, '');
+    code += `${distHeaders.shift()} _(${srcHeader})_\n`;
+  }
+  return code;
+}
+
 function joinMds(mds: Result[]): string {
   return mds
     .map((pair: Result): string => {
       const { source, dist } = pair;
+      const { mode } = pair;
+      if (options.mergeTranslatedHeader && mode === 'headers') {
+        return mergeHeadersResult(pair);
+      }
       return [source, dist].join('\n\n');
     })
     .join('\n\n----\n\n');
@@ -15,11 +32,13 @@ function joinMds(mds: Result[]): string {
 
 export interface ProcessOptions {
   fromHtml: boolean;
+  mergeTranslatedHeader: boolean;
 }
 
 export interface Result {
   source: string;
   dist: string;
+  mode?: 'default' | 'headers';
 }
 
 export async function translate(
@@ -44,13 +63,16 @@ export async function translate(
 
   const promises = domChunks.map(
     async (chunk): Promise<Result> => {
-      const srcHtml = convertDomToHtml(chunk);
+      const { dom, mode } = chunk;
+
+      const srcHtml = convertDomToHtml(dom);
 
       const distHtml = await translateByDeepl(srcHtml, { targetLang, authKey, useFreeApi });
 
       const result: Result = {
         source: convertHtmlToMd(srcHtml),
         dist: convertHtmlToMd(distHtml),
+        mode,
       };
 
       return result;
@@ -59,5 +81,5 @@ export async function translate(
 
   const distMds = await Promise.all(promises);
 
-  return joinMds(distMds);
+  return joinMds(distMds, { mergeTranslatedHeader: options.processOptions.mergeTranslatedHeader });
 }

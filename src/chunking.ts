@@ -2,6 +2,7 @@ import { JSDOM } from 'jsdom';
 
 export interface ChunkingOptions {
   tooLongThreshold?: number;
+  useHeadersChunk?: boolean;
 }
 
 export async function createDomTree(html: string): Promise<JSDOM> {
@@ -30,8 +31,8 @@ function isHeaderNode(node: Node | null): boolean {
   return ['h1', 'h2', 'h3'].includes(node.nodeName.toLowerCase());
 }
 
-function isNewSection(chunk: JSDOM, node: ChildNode): boolean {
-  if (isHeaderNode(node) && !isHeaderNode(chunk.window.document.body.lastChild)) {
+function isNewSection(dom: JSDOM, node: ChildNode): boolean {
+  if (isHeaderNode(node) && !isHeaderNode(dom.window.document.body.lastChild)) {
     return true;
   }
   return false;
@@ -44,49 +45,83 @@ function isEmptyTextNode(node: ChildNode): boolean {
   return false;
 }
 
-function isChunkTooLong(chunk: JSDOM, threshold: number): boolean {
+function isDomTooLong(dom: JSDOM, threshold: number): boolean {
   if (threshold <= 0) return false;
-  return (chunk.window.document.body.textContent?.length || 0) > threshold;
+  return (dom.window.document.body.textContent?.length || 0) > threshold;
 }
 
-function isEmptyChunk(chunk: JSDOM): boolean {
-  return !chunk.window.document.body.lastChild;
+function isEmptyDom(dom: JSDOM): boolean {
+  return !dom.window.document.body.lastChild;
 }
 
-export function chunking(dom: JSDOM, options: ChunkingOptions): Array<JSDOM> {
+interface Chunk {
+  dom: JSDOM;
+  mode: 'default' | 'headers';
+}
+
+export function chunking(dom: JSDOM, options: ChunkingOptions): Chunk[] {
   const body = dom.window.document.body;
 
-  const results = [];
-  let chunk = null;
-  const { tooLongThreshold = 1000 } = options;
+  const results: Chunk[] = [];
+  let chunk: Chunk | null = null;
+  const { tooLongThreshold = 1000, useHeadersChunk = true } = options;
 
   while (body.firstChild) {
     if (!chunk) {
-      chunk = createDom();
+      chunk = {
+        dom: createDom(),
+        mode: 'default',
+      };
       results.push(chunk);
     }
 
     const node = body.removeChild(body.firstChild);
 
     if (isSeparator(node)) {
-      if (!isEmptyChunk(chunk)) {
+      // console.log('separator');
+      if (!isEmptyDom(chunk.dom)) {
         chunk = null;
       }
       continue;
     }
 
-    if (!isEmptyChunk(chunk) && isNewSection(chunk, node)) {
+    if (isEmptyTextNode(node)) continue;
+
+    if (
+      isHeaderNode(node) &&
+      chunk.dom.window.document.body.lastChild &&
+      !isHeaderNode(chunk.dom.window.document.body.lastChild)
+    ) {
+      // console.log('split before header');
+      // split before header
+      body.insertBefore(node, body.firstChild);
+      if (!isEmptyDom(chunk.dom)) {
+        chunk = null;
+      }
+      continue;
+    }
+
+    if (useHeadersChunk && isHeaderNode(chunk.dom.window.document.body.lastChild) && !isHeaderNode(node)) {
+      // console.log('headers chunk was end');
+      // headers chunk was end
+      chunk.mode = 'headers';
+      chunk = null;
+      body.insertBefore(node, body.firstChild);
+      continue;
+    }
+
+    if (!isEmptyDom(chunk.dom) && isNewSection(chunk.dom, node)) {
+      // console.log('new section header detected');
       // new section header detected
       body.insertBefore(node, body.firstChild);
       chunk = null;
       continue;
     }
 
-    if (!isEmptyTextNode(node)) {
-      chunk.window.document.body.appendChild(node);
-      if (isChunkTooLong(chunk, tooLongThreshold)) {
-        chunk = null;
-      }
+    chunk.dom.window.document.body.appendChild(node);
+
+    if (isDomTooLong(chunk.dom, tooLongThreshold)) {
+      chunk = null;
     }
   }
 

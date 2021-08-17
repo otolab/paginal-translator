@@ -53,13 +53,17 @@ export const run = async (
   const result = await translate(content, {
     processOptions: {
       fromHtml: flags.fromHtml,
+      mergeTranslatedHeader: true,
     },
     translateOptions: {
       targetLang: 'ja',
       authKey: flags.deeplAuthKey || process.env.DEEPL_AUTH_KEY || '',
       useFreeApi: false,
     },
-    chunkingOptions: { tooLongThreshold: 500 },
+    chunkingOptions: {
+      tooLongThreshold: 500,
+      useHeadersChunk: true,
+    },
   });
 
   // output
