@@ -28,7 +28,7 @@ function isSeparator(node: ChildNode): boolean {
 
 function isHeaderNode(node: Node | null): boolean {
   if (!node) return false;
-  return ['h1', 'h2', 'h3'].includes(node.nodeName.toLowerCase());
+  return ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(node.nodeName.toLowerCase());
 }
 
 function isNewSection(dom: JSDOM, node: ChildNode): boolean {
