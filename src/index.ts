@@ -25,6 +25,7 @@ function mergeDefaultResult(pair: Result): string {
     dist,
     '\n',
     '> _原文:_',
+    '>',
     source
       .split('\n')
       .map((line) => `> ${line}`)
