@@ -16,7 +16,7 @@ const usage = `
       DEEPL_AUTH_KEY          deepl api auth key
 
     Examples
-      $ markdown-translate test.md
+      $ paginal-translator --deepl-auth-key xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx test.md
 `;
 
 export const cli = meow(usage, {
